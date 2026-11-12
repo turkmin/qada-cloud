@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Qada Daftari — Oilaviy Bulutli</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a071b;
+      --bg-card: #14102d;
+      --bg-card-sub: #1b163d;
+      --accent-purple: #7c3aed;
+      --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+      --gold-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      --text-white: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --danger: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.15);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-dark);
+      background-image: radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(109, 40, 217, 0.12) 0%, transparent 40%);
+      color: var(--text-white);
+      padding: 16px;
+      padding-bottom: 95px;
+      min-height: 100vh;
+    }
+
+    /* Kirish / Auth va PIN oynasi */
+    .overlay-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .auth-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 30px 24px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+
+    .auth-title {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .auth-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .google-btn {
+      width: 100%;
+      padding: 14px;
+      background: #ffffff;
+      color: #1e293b;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(255,255,255,0.15);
+    }
+
+    .pin-input {
+      width: 100%;
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 12px;
+      color: white;
+      outline: none;
+      margin-bottom: 16px;
+    }
+
+    .pin-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Asosiy ekran */
+    .brand-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--gold-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+    .role-admin { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .role-viewer { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    .top-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-white);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .welcome-banner {
+      background: linear-gradient(135deg, rgba(30, 24, 68, 0.95) 0%, rgba(20, 16, 45, 0.95) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+
+    .banner-badge {
+      font-size: 11px;
+      color: #fbbf24;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .banner-heading {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .banner-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* O'zaro hisob-kitob */
+    #personBalanceCard {
+      display: none;
+      background: linear-gradient(135deg, #1e1b4b 0%, #2e1065 100%);
+      border: 1px solid #8b5cf6;
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .p-balance-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .p-balance-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+
+    .p-stat-box {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 8px 4px;
+      border-radius: 8px;
+    }
+
+    .p-stat-lbl { font-size: 10px; color: var(--text-muted); }
+    .p-stat-val { font-size: 13px; font-weight: 700; margin-top: 2px; }
+
+    /* Top-5 Mehmonlar Bloki */
+    #topGuestsCard {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .top-title { font-size: 13px; font-weight: 700; color: #fcd34d; display: flex; align-items: center; gap: 6px; }
+    .top-list { display: flex; flex-direction: column; gap: 6px; }
+    .top-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-sub); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 12px; }
+    .top-rank { font-weight: 700; color: #c4b5fd; width: 24px; }
+    .top-name { flex: 1; font-weight: 600; }
+    .top-amount { font-weight: 700; color: #34d399; }
+
+    /* Statistika */
+    .stats-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .stats-header-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+    .refresh-btn { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-subtle); color: var(--text-white); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-box { background: var(--bg-card-sub); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .stat-box.full { grid-column: span 2; }
+    .stat-label { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .stat-val { font-size: 15px; font-weight: 700; color: var(--text-white); }
+    .stat-val.income { color: #34d399; }
+    .stat-val.expense { color: #f87171; }
+
+    /* Filtrlar */
+    .type-switcher { display: flex; gap: 8px; margin-bottom: 10px; background: var(--bg-card); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); }
+    .type-btn { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text-muted); background: transparent; border: none; border-radius: 10px; cursor: pointer; }
+    .type-btn.active { background: var(--accent-gradient); color: white; }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .filter-select { flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-white); padding: 8px 10px; border-radius: 10px; font-size: 12px; outline: none; }
+    .search-box { margin-bottom: 10px; }
+    .search-box input { width: 100%; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 12px 16px; border-radius: var(--radius-md); color: var(--text-white); font-size: 14px; outline: none; }
+    .owner-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; scrollbar-width: none; }
+    .filter-btn { background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-muted); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+    .filter-btn.active { background: rgba(139, 92, 246, 0.25); color: #c4b5fd; border-color: #8b5cf6; }
+
+    /* Kartochka */
+    .card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .card.income-card { border-left: 3px solid var(--success); }
+    .card.expense-card { border-left: 3px solid var(--danger); }
+    .card-top { display: flex; justify-content: space-between; align-items: center; }
+    .person-box { display: flex; align-items: center; gap: 8px; }
+    .badge-yonalish { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+    .badge-yonalish.income { background: var(--success-bg); color: #34d399; }
+    .badge-yonalish.expense { background: var(--danger-bg); color: #f87171; }
+    .person-name { font-size: 15px; font-weight: 700; }
+    .amount-badge { background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 13px; }
+    .card-info { background: var(--bg-card-sub); border-radius: var(--radius-sm); padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--text-muted); }
+    .card-info b { color: #e2e8f0; }
+    .card-bottom { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+    .act-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); color: var(--text-white); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .act-btn.del { background: var(--danger-bg); border-color: rgba(244, 63, 94, 0.3); color: #fda4af; }
+
+    .fab { position: fixed; bottom: 24px; right: 20px; width: 58px; height: 58px; border-radius: 29px; background: var(--accent-gradient); color: white; border: none; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.5); cursor: pointer; z-index: 50; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); z-index: 100; align-items: flex-end; }
+    .modal.active { display: flex; }
+    .modal-content { background: #15112e; border: 1px solid var(--border-subtle); width: 100%; border-radius: 24px 24px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .form-group input { width: 100%; background: var(--bg-card-sub); border: 1px solid var(--border-subtle); padding: 10px 12px; border-radius: var(--radius-sm); color: white; font-size: 14px; outline: none; }
+    .duplicate-alert { display: none; background: var(--warning-bg); border: 1px solid var(--warning); color: #fde68a; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11px; margin-top: 4px; }
+    .quick-amount-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .quick-btn { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-subtle); color: #c4b5fd; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .yonalish-selector { display: flex; gap: 10px; margin-bottom: 12px; }
+    .yonalish-opt { flex: 1; padding: 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg-card-sub); color: var(--text-muted); font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; }
+    .yonalish-opt.selected-income { border-color: var(--success); background: var(--success-bg); color: #34d399; }
+    .yonalish-opt.selected-expense { border-color: var(--danger); background: var(--danger-bg); color: #f87171; }
+    .form-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .btn { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
+    .btn-save { background: var(--accent-gradient); color: white; }
+    .btn-cancel { background: rgba(255, 255, 255, 0.08); color: var(--text-white); }
+    .loader { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <!-- 1-oyna: Google orqali kirish -->
+  <div id="googleAuthScreen" class="overlay-screen">
+    <div class="auth-box">
+      <div style="font-size: 40px; margin-bottom: 12px;">☁️</div>
+      <div class="auth-title" id="authFamilyTitle">Oilaviy Qada Daftari</div>
+      <div class="auth-subtitle">Ma'lumotlaringiz bulutda xavfsiz saqlanishi uchun shaxsiy Gmail hisobingiz bilan kiring:</div>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <span>🔵</span> Google (Gmail) orqali kirish
+      </button>
+    </div>
+  </div>
+
+  <!-- 2-oyna: Admin yoki Kuzatuvchi PIN-kodi -->
+  <div id="pinScreen" class="overlay-screen" style="display: none;">
+    <div class="auth-box">
+      <div style="font-size: 36px; margin-bottom: 10px;">🔐</div>
+      <div class="auth-title">Kirish huquqini tasdiqlang</div>
+      <div class="auth-subtitle">To'liq boshqaruv uchun <b>Admin PIN</b>, faqat ko'rish uchun <b>Kuzatuvchi PIN</b> kodini kiriting:</div>
+      <input type="password" id="pinInput" class="pin-input" maxlength="4" placeholder="••••" pattern="[0-9]*" inputmode="numeric">
+      <button class="pin-btn" onclick="checkPin()">Kirish</button>
+      <div style="margin-top: 14px;">
+        <button onclick="logoutGoogle()" style="background:none; border:none; color:var(--text-muted); font-size:11px; text-decoration:underline; cursor:pointer;">Boshqa Gmail hisobdan kirish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yuqori qism -->
+  <div class="brand-header">
+    <div class="brand-left">
+      <div class="brand-icon">👑</div>
+      <div>
+        <div class="brand-title" id="mainFamilyTitle">Qada Daftari</div>
+        <div class="brand-subtitle">
+          <span id="userEmailLabel">Bulutli baza</span>
+          <span id="roleBadge" class="role-badge role-admin">ADMIN</span>
+        </div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" onclick="printReport()" title="PDF hisobot">🖨️ PDF</button>
+      <button class="icon-btn" onclick="logoutGoogle()" title="Chiqish">🚪</button>
+    </div>
+  </div>
+
+  <div class="welcome-banner">
+    <div class="banner-badge">✦ Oilaviy bulutli tizim</div>
+    <div class="banner-heading" id="bannerFamilyHeading">Qada va to‘yona hisobi</div>
+    <div class="banner-desc" id="roleDescText">Barcha oila a'zolari bilan real vaqtda sinxronlangan baza.</div>
+  </div>
+
+  <!-- Odam bo'yicha o'zaro balans -->
+  <div id="personBalanceCard">
+    <div class="p-balance-title">
+      <span>👥</span>
+      <span id="pBalanceName">O'zaro hisob-kitob</span>
+    </div>
+    <div class="p-balance-stats">
+      <div class="p-stat-box">
+        <div class="p-stat-lbl">Bizga kelgan</div>
+        <div class="p-stat-val" id="pIncome" style="color: #34d399;">0</div>
+      </div>
+      <div class="p-stat-box">
+        <div class="p-stat-lbl">Biz borgan</div>
+        <div class="p-stat-val" id="pExpense" style="color: #f87171;">0</div>
+      </div>
+      <div class="p-stat-box">
+        <div class="p-stat-lbl">Farq (Balans)</div>
+        <div class="p-stat-val" id="pBalance">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top-5 Mehmonlar Bloki -->
+  <div id="topGuestsCard">
+    <div class="top-header">
+      <div class="top-title">🥇 Top-5 Katta Qadalar</div>
+      <button class="refresh-btn" onclick="toggleTopGuests()">Yopish</button>
+    </div>
+    <div class="top-list" id="topGuestsList"></div>
+  </div>
+
+  <!-- Umumiy Statistika -->
+  <div class="stats-card">
+    <div class="stats-top">
+      <div class="stats-header-title">
+        <span>📊</span>
+        <span id="statsTitle">Umumiy balans</span>
+      </div>
+      <div>
+        <button class="refresh-btn" onclick="toggleTopGuests()">🥇 Top-5</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box full">
+        <div class="stat-label">👥 Qada yozdirganlar soni</div>
+        <div class="stat-val" id="stat-count">0 ta odam</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">📥 Jami Kelgan (Kirim)</div>
+        <div class="stat-val income" id="stat-income">0 so'm</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">📤 Jami Berilgan (Chiqim)</div>
+        <div class="stat-val expense" id="stat-expense">0 so'm</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">⚖️ Qoldiq (Farq)</div>
+        <div class="stat-val" id="stat-balance">0 so'm</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">💲 Valyuta (USD)</div>
+        <div class="stat-val" id="stat-usd">0 $</div>
+      </div>
+      <div class="stat-box full">
+        <div class="stat-label">🐑 Chorva va Mulklar</div>
+        <div class="stat-val" id="stat-items" style="font-size: 12px; font-weight: 500;">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtrlar -->
+  <div class="type-switcher">
+    <button class="type-btn active" onclick="filterByType('all', this)">Barchasi</button>
+    <button class="type-btn" onclick="filterByType('kirim', this)">📥 Kelgan (Kirim)</button>
+    <button class="type-btn" onclick="filterByType('chiqim', this)">📤 Berilgan (Chiqim)</button>
+  </div>
+
+  <div class="filter-row">
+    <select class="filter-select" id="sortFilter" onchange="applyFilters()">
+      <option value="newest">🕒 Yangilar oldinda</option>
+      <option value="amount_desc">💰 Katta summa oldinda</option>
+      <option value="amount_asc">📉 Kichik summa oldinda</option>
+      <option value="name_asc">🔤 Ism bo'yicha (A-Z)</option>
+    </select>
+    <select class="filter-select" id="yearFilter" onchange="applyFilters()">
+      <option value="all">📅 Barcha yillar</option>
+    </select>
+    <select class="filter-select" id="typeFilter" onchange="applyFilters()">
+      <option value="all">🎉 Barcha to'y turlari</option>
+    </select>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Ism, to'y sohibi yoki mulk nomi..." oninput="handleSearch()">
+  </div>
+
+  <div class="owner-filter" id="ownerFilters">
+    <button class="filter-btn active" onclick="filterByOwner('all')">Barcha to'ylar</button>
+  </div>
+
+  <div id="recordsList">
+    <div class="loader">Bulutli bazadan yuklanmoqda...</div>
+  </div>
+
+  <button class="fab" id="addFabBtn" onclick="openAddModal()">+</button>
+
+  <datalist id="ownersDatalist"></datalist>
+  <datalist id="typesDatalist"></datalist>
+
+  <!-- Modal forma -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-title" id="modalTitle">Yangi Qada Qo'shish</div>
+      <input type="hidden" id="editId">
+      
+      <label style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px; display: block;">QADA YO'NALISHI *</label>
+      <div class="yonalish-selector">
+        <div class="yonalish-opt selected-income" id="optIncome" onclick="selectYonalish('kirim')">📥 Bizga kelgan (Kirim)</div>
+        <div class="yonalish-opt" id="optExpense" onclick="selectYonalish('chiqim')">📤 Biz bergan (Chiqim)</div>
+      </div>
+      <input type="hidden" id="inputYonalish" value="kirim">
+
+      <div class="form-group">
+        <label>Ism Familiya *</label>
+        <input type="text" id="inputName" placeholder="Masalan: Karim Olimov" oninput="checkDuplicate()">
+        <div id="dupAlert" class="duplicate-alert"></div>
+      </div>
+      <div class="form-group">
+        <label>To'y Sohibi *</label>
+        <input type="text" id="inputOwner" list="ownersDatalist" placeholder="Masalan: Sardor+Guli" oninput="checkDuplicate()">
+      </div>
+      <div class="form-group">
+        <label>To'y Turi</label>
+        <input type="text" id="inputType" list="typesDatalist" placeholder="Sunnat to'y, Nikoh to'y...">
+      </div>
+      <div class="form-group">
+        <label>Qada Miqdori *</label>
+        <input type="text" id="inputAmount" placeholder="50 ming, 100 $, 1 Qo'y...">
+        <div class="quick-amount-row">
+          <button type="button" class="quick-btn" onclick="setQuickAmount('50 ming')">+50 ming</button>
+          <button type="button" class="quick-btn" onclick="setQuickAmount('100 ming')">+100 ming</button>
+          <button type="button" class="quick-btn" onclick="setQuickAmount('200 ming')">+200 ming</button>
+          <button type="button" class="quick-btn" onclick="setQuickAmount('500 ming')">+500 ming</button>
+          <button type="button" class="quick-btn" onclick="setQuickAmount('100 $')">+100 $</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Yil</label>
+        <input type="text" id="inputYear" placeholder="2026">
+      </div>
+      <div class="form-group">
+        <label>Izoh</label>
+        <input type="text" id="inputNote" placeholder="Qo'shimcha eslatma (qishloq/mahalla...)">
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">Bekor qilish</button>
+        <button class="btn btn-save" id="saveBtn" onclick="saveRecord()">Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // =========================================================================
+    // 1. HAR BIR MIJOZ UCHUN SHU 3 TA QATORNI O'ZGARTIRASIZ:
+    // =========================================================================
+    const MIJOZ_SOZLAMALARI = {
+      oilaSarlavhasi: "Karimovlar oilasi qada daftari", // Mijoz aytgan sarlavha
+      adminPin: "7777",                                 // To'liq boshqaruv (qo'shish/tahrirlash)
+      kuzatuvchiPin: "1111"                             // Faqat ko'rish huquqi
+    };
+
+    // =========================================================================
+    // 2. SIZNING FIREBASE KONFIGURATSIYANGIZ (TAYYOR ULANDI):
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0A7993onZGgt2vSyVOlmKpb8iy8W7aTw",
+      authDomain: "qada-daftari.firebaseapp.com",
+      projectId: "qada-daftari",
+      storageBucket: "qada-daftari.firebasestorage.app",
+      messagingSenderId: "1004447303294",
+      appId: "1:1004447303294:web:e995fdfebdbef2eab8ba2f",
+      measurementId: "G-8XYD7TX1Z9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUser = null;
+    let userRole = 'admin';
+    let allRecords = [];
+    let currentOwner = 'all';
+    let currentType = 'all';
+    let unsubscribeFirestore = null;
+
+    document.getElementById('authFamilyTitle').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
+    document.getElementById('mainFamilyTitle').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
+    document.getElementById('bannerFamilyHeading').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('userEmailLabel').innerText = user.email;
+        document.getElementById('googleAuthScreen').style.display = 'none';
+        document.getElementById('pinScreen').style.display = 'flex';
+        document.getElementById('pinInput').focus();
+      } else {
+        currentUser = null;
+        if (unsubscribeFirestore) unsubscribeFirestore();
+        document.getElementById('googleAuthScreen').style.display = 'flex';
+        document.getElementById('pinScreen').style.display = 'none';
+      }
+    });
+
+    window.signInWithGoogle = async function() {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        alert("Google orqali kirishda xatolik: " + error.message);
+      }
+    };
+
+    window.logoutGoogle = async function() {
+      if (confirm("Hisobdan chiqishni xohlaysizmi?")) {
+        await signOut(auth);
+      }
+    };
+
+    window.checkPin = function() {
+      const entered = document.getElementById('pinInput').value;
+      if (entered === MIJOZ_SOZLAMALARI.adminPin) {
+        userRole = 'admin';
+        applyRoleUI();
+        document.getElementById('pinScreen').style.display = 'none';
+        startRealtimeSync();
+      } else if (entered === MIJOZ_SOZLAMALARI.kuzatuvchiPin) {
+        userRole = 'viewer';
+        applyRoleUI();
+        document.getElementById('pinScreen').style.display = 'none';
+        startRealtimeSync();
+      } else {
+        alert("Noto'g'ri PIN-kod! Admin yoki Kuzatuvchi kodini kiriting.");
+        document.getElementById('pinInput').value = "";
+      }
+    };
+
+    function applyRoleUI() {
+      const badge = document.getElementById('roleBadge');
+      const fab = document.getElementById('addFabBtn');
+      const desc = document.getElementById('roleDescText');
+
+      if (userRole === 'admin') {
+        badge.innerText = "ADMIN";
+        badge.className = "role-badge role-admin";
+        fab.style.display = "flex";
+        desc.innerText = "To'liq boshqaruv rejimi (qo'shish va tahrirlash ochiq).";
+      } else {
+        badge.innerText = "KUZATUVCHI";
+        badge.className = "role-badge role-viewer";
+        fab.style.display = "none";
+        desc.innerText = "Faqat ko'rish rejimi (o'zgartirish cheklangan).";
+      }
+    }
+
+    function startRealtimeSync() {
+      if (!currentUser) return;
+      const q = query(collection(db, "users", currentUser.uid, "qadalar"), orderBy("createdAt", "asc"));
+      unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+        allRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateAllUI();
+      }, (error) => {
+        alert("Bazaga ulanishda xatolik: " + error.message);
+      });
+    }
+
+    function parseAmountDetails(rawStr) {
+      const str = (rawStr || '').trim();
+      const lower = str.toLowerCase();
+
+      if (lower.includes('$') || lower.includes('usd') || lower.includes('dollar')) {
+        const numMatch = lower.replace(/\s+/g, '').match(/[\d.,]+/);
+        const num = numMatch ? parseFloat(numMatch[0].replace(',', '.')) : 0;
+        return { summa_son: isNaN(num) ? 0 : num, valyuta: 'USD', mulk_nomi: '' };
+      }
+
+      const hasNumber = /\d/.test(lower);
+      const isItemKeyword = /(qo'y|qoy|qo‘y|ho'kiz|hokiz|ho‘kiz|buzoq|sigir|ot|gilam|televizor|muzlatgich|kir yuvish|sarpo|tilla|uzuk)/i.test(lower);
+
+      if (hasNumber && !isItemKeyword) {
+        let multiplier = 1;
+        if (lower.includes('mln') || lower.includes('million')) multiplier = 1000000;
+        else if (lower.includes('ming') || lower.includes('k')) multiplier = 1000;
+
+        const cleaned = lower.replace(/[^\d.,]/g, '').replace(',', '.');
+        let num = parseFloat(cleaned);
+        if (!isNaN(num)) {
+          if (multiplier === 1 && num < 1000 && !lower.includes("so'm") && !lower.includes("som")) {
+            num = num * 1000;
+          } else {
+            num = num * multiplier;
+          }
+          return { summa_son: Math.round(num), valyuta: 'UZS', mulk_nomi: '' };
+        }
+      }
+
+      const cleanItem = str.replace(/^\d+\s*(ta|dona|bosh)?\s*/i, '').trim() || str;
+      return { summa_son: 0, valyuta: 'MULK', mulk_nomi: cleanItem };
+    }
+
+    function updateAllUI() {
+      populateDropdowns();
+      populateDatalists();
+      renderFilters();
+      renderStats();
+      renderRecords();
+    }
+
+    function populateDatalists() {
+      const owners = [...new Set(allRecords.map(r => r.toy_sohibi).filter(Boolean))];
+      const types = [...new Set(allRecords.map(r => r.toy_turi).filter(Boolean))];
+      document.getElementById('ownersDatalist').innerHTML = owners.map(o => `<option value="${o}">`).join('');
+      document.getElementById('typesDatalist').innerHTML = types.map(t => `<option value="${t}">`).join('');
+    }
+
+    function populateDropdowns() {
+      const currentYear = document.getElementById('yearFilter').value;
+      const currentWeddingType = document.getElementById('typeFilter').value;
+
+      const years = [...new Set(allRecords.map(r => r.yil).filter(Boolean))].sort().reverse();
+      const yearSelect = document.getElementById('yearFilter');
+      yearSelect.innerHTML = '<option value="all">📅 Barcha yillar</option>';
+      years.forEach(y => {
+        yearSelect.innerHTML += `<option value="${y}" ${String(y) === String(currentYear) ? 'selected' : ''}>${y}-yil</option>`;
+      });
+
+      const types = [...new Set(allRecords.map(r => r.toy_turi).filter(Boolean))];
+      const typeSelect = document.getElementById('typeFilter');
+      typeSelect.innerHTML = '<option value="all">🎉 Barcha to\'y turlari</option>';
+      types.forEach(t => {
+        typeSelect.innerHTML += `<option value="${t}" ${t === currentWeddingType ? 'selected' : ''}>${t}</option>`;
+      });
+    }
+
+    window.filterByOwner = function(owner) {
+      currentOwner = owner;
+      renderFilters();
+      renderStats();
+      renderRecords();
+      renderTopGuests();
+    };
+
+    function renderStats() {
+      const targetRecords = currentOwner === 'all' ? allRecords : allRecords.filter(r => r.toy_sohibi === currentOwner);
+      document.getElementById('statsTitle').innerText = currentOwner === 'all' ? "Umumiy balans" : `"${currentOwner}" to'yi hisobi`;
+
+      let incomeUzs = 0, expenseUzs = 0, usd = 0, items = {};
+      targetRecords.forEach(r => {
+        const yonalish = (r.yonalish || 'kirim').toLowerCase();
+        const val = Number(r.summa_son || 0);
+        if (r.valyuta === 'UZS') {
+          if (yonalish === 'chiqim') expenseUzs += val;
+          else incomeUzs += val;
+        } else if (r.valyuta === 'USD') {
+          usd += val;
+        } else if (r.mulk_nomi) {
+          items[r.mulk_nomi] = (items[r.mulk_nomi] || 0) + 1;
+        }
+      });
+
+      const balance = incomeUzs - expenseUzs;
+      document.getElementById('stat-count').innerText = targetRecords.length + " ta odam";
+      document.getElementById('stat-income').innerText = incomeUzs.toLocaleString('uz-UZ') + " so'm";
+      document.getElementById('stat-expense').innerText = expenseUzs.toLocaleString('uz-UZ') + " so'm";
+      const balanceEl = document.getElementById('stat-balance');
+      balanceEl.innerText = (balance >= 0 ? "+" : "") + balance.toLocaleString('uz-UZ') + " so'm";
+      balanceEl.style.color = balance >= 0 ? "#34d399" : "#f87171";
+      document.getElementById('stat-usd').innerText = usd.toLocaleString('uz-UZ') + " $";
+
+      const itemKeys = Object.keys(items);
+      document.getElementById('stat-items').innerText = itemKeys.length > 0 ? itemKeys.map(k => `${k}: ${items[k]} ta`).join(', ') : "Mulklar yo'q";
+    }
+
+    function renderFilters() {
+      const owners = [...new Set(allRecords.map(r => r.toy_sohibi).filter(Boolean))];
+      const container = document.getElementById('ownerFilters');
+      container.innerHTML = `<button class="filter-btn ${currentOwner === 'all' ? 'active' : ''}" onclick="filterByOwner('all')">Barcha to'ylar</button>`;
+      owners.forEach(owner => {
+        container.innerHTML += `<button class="filter-btn ${currentOwner === owner ? 'active' : ''}" onclick="filterByOwner('${owner}')">${owner}</button>`;
+      });
+    }
+
+    window.filterByType = function(type, btn) {
+      currentType = type;
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderRecords();
+      renderTopGuests();
+    };
+
+    window.applyFilters = function() {
+      renderRecords();
+      renderTopGuests();
+    };
+
+    window.handleSearch = function() {
+      renderRecords();
+    };
+
+    function renderRecords() {
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const selectedYear = document.getElementById('yearFilter').value;
+      const selectedType = document.getElementById('typeFilter').value;
+      const sortBy = document.getElementById('sortFilter').value;
+      const container = document.getElementById('recordsList');
+      container.innerHTML = '';
+
+      const balanceCard = document.getElementById('personBalanceCard');
+      if (search.length >= 3) {
+        let pInc = 0, pExp = 0, hasMatches = false;
+        allRecords.forEach(r => {
+          if ((r.ism_familiya || '').toLowerCase().includes(search)) {
+            hasMatches = true;
+            const val = Number(r.summa_son || 0);
+            if ((r.yonalish || 'kirim').toLowerCase() === 'chiqim') pExp += val;
+            else pInc += val;
+          }
+        });
+        if (hasMatches) {
+          balanceCard.style.display = 'block';
+          document.getElementById('pBalanceName').innerText = `"${document.getElementById('searchInput').value.trim()}" bilan o'zaro hisob:`;
+          document.getElementById('pIncome').innerText = pInc.toLocaleString('uz-UZ') + " so'm";
+          document.getElementById('pExpense').innerText = pExp.toLocaleString('uz-UZ') + " so'm";
+          const pDiff = pInc - pExp;
+          const pBalEl = document.getElementById('pBalance');
+          pBalEl.innerText = (pDiff >= 0 ? "+" : "") + pDiff.toLocaleString('uz-UZ') + " so'm";
+          pBalEl.style.color = pDiff >= 0 ? "#34d399" : "#f87171";
+        } else {
+          balanceCard.style.display = 'none';
+        }
+      } else {
+        balanceCard.style.display = 'none';
+      }
+
+      let filtered = allRecords.filter(r => {
+        const yonalish = (r.yonalish || 'kirim').toLowerCase();
+        const matchesType = currentType === 'all' || yonalish === currentType;
+        const matchesOwner = currentOwner === 'all' || r.toy_sohibi === currentOwner;
+        const matchesYear = selectedYear === 'all' || String(r.yil) === String(selectedYear);
+        const matchesWeddingType = selectedType === 'all' || r.toy_turi === selectedType;
+        const text = `${r.ism_familiya} ${r.toy_sohibi} ${r.miqdori} ${r.mulk_nomi || ''} ${r.izoh || ''}`.toLowerCase();
+        return matchesType && matchesOwner && matchesYear && matchesWeddingType && text.includes(search);
+      });
+
+      if (sortBy === 'amount_desc') filtered.sort((a, b) => Number(b.summa_son || 0) - Number(a.summa_son || 0));
+      else if (sortBy === 'amount_asc') filtered.sort((a, b) => Number(a.summa_son || 0) - Number(b.summa_son || 0));
+      else if (sortBy === 'name_asc') filtered.sort((a, b) => (a.ism_familiya || '').localeCompare(b.ism_familiya || ''));
+      else filtered.reverse();
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="loader">Hech qanday ma\'lumot topilmadi.</div>';
+        return;
+      }
+
+      filtered.forEach(r => {
+        const isIncome = (r.yonalish || 'kirim').toLowerCase() === 'kirim';
+        const card = document.createElement('div');
+        card.className = `card ${isIncome ? 'income-card' : 'expense-card'}`;
+
+        const adminControlsHtml = userRole === 'admin' ? `
+          <div class="card-bottom">
+            <button class="act-btn" onclick="openEditModal('${r.id}')">✏️ Tahrirlash</button>
+            <button class="act-btn del" onclick="deleteRecord('${r.id}')">🗑 O'chirish</button>
+          </div>
+        ` : '';
+
+        card.innerHTML = `
+          <div class="card-top">
+            <div class="person-box">
+              <span class="badge-yonalish ${isIncome ? 'income' : 'expense'}">${isIncome ? '📥 KIRIM' : '📤 CHIQIM'}</span>
+              <div class="person-name">${r.ism_familiya}</div>
+            </div>
+            <div class="amount-badge">${r.miqdori}</div>
+          </div>
+          <div class="card-info">
+            <div>🏠 To'y sohibi: <b>${r.toy_sohibi}</b> ${r.toy_turi ? `(${r.toy_turi})` : ''}</div>
+            <div>📅 Yili: <b>${r.yil || '-'}</b> ${r.izoh ? `| ℹ️ ${r.izoh}` : ''}</div>
+          </div>
+          ${adminControlsHtml}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    window.toggleTopGuests = function() {
+      const card = document.getElementById('topGuestsCard');
+      if (card.style.display === 'block') card.style.display = 'none';
+      else { renderTopGuests(); card.style.display = 'block'; }
+    };
+
+    function renderTopGuests() {
+      const targetRecords = currentOwner === 'all' ? allRecords : allRecords.filter(r => r.toy_sohibi === currentOwner);
+      const sorted = [...targetRecords]
+        .filter(r => (r.yonalish || 'kirim').toLowerCase() === 'kirim' && r.valyuta === 'UZS' && Number(r.summa_son || 0) > 0)
+        .sort((a, b) => Number(b.summa_son || 0) - Number(a.summa_son || 0))
+        .slice(0, 5);
+
+      const listEl = document.getElementById('topGuestsList');
+      if (sorted.length === 0) {
+        listEl.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 6px;">Katta qadalar topilmadi</div>';
+        return;
+      }
+      listEl.innerHTML = sorted.map((r, i) => `
+        <div class="top-item">
+          <span class="top-rank">#${i + 1}</span>
+          <span class="top-name">${r.ism_familiya}</span>
+          <span class="top-amount">${Number(r.summa_son).toLocaleString('uz-UZ')} so'm</span>
+        </div>
+      `).join('');
+    }
+
+    window.checkDuplicate = function() {
+      const name = document.getElementById('inputName').value.trim().toLowerCase();
+      const owner = document.getElementById('inputOwner').value.trim().toLowerCase();
+      const alertEl = document.getElementById('dupAlert');
+      const editId = document.getElementById('editId').value;
+      if (name.length < 3 || !owner) { alertEl.style.display = 'none'; return; }
+
+      const match = allRecords.find(r =>
+        String(r.id) !== String(editId) &&
+        (r.ism_familiya || '').trim().toLowerCase() === name &&
+        (r.toy_sohibi || '').trim().toLowerCase() === owner
+      );
+      if (match) {
+        alertEl.innerText = `⚠️ Diqqat: "${match.ism_familiya}" bu to'yda allaqachon bor (${match.miqdori})!`;
+        alertEl.style.display = 'block';
+      } else {
+        alertEl.style.display = 'none';
+      }
+    };
+
+    window.setQuickAmount = function(val) { document.getElementById('inputAmount').value = val; };
+
+    window.selectYonalish = function(val) {
+      document.getElementById('inputYonalish').value = val;
+      document.getElementById('optIncome').className = val === 'kirim' ? 'yonalish-opt selected-income' : 'yonalish-opt';
+      document.getElementById('optExpense').className = val === 'chiqim' ? 'yonalish-opt selected-expense' : 'yonalish-opt';
+    };
+
+    window.openAddModal = function() {
+      if (userRole !== 'admin') return;
+      document.getElementById('modalTitle').innerText = "Yangi Qada Qo'shish";
+      document.getElementById('editId').value = "";
+      document.getElementById('inputName').value = "";
+      document.getElementById('inputOwner').value = currentOwner !== 'all' ? currentOwner : "";
+      document.getElementById('inputType').value = "";
+      document.getElementById('inputAmount').value = "";
+      document.getElementById('inputYear').value = new Date().getFullYear();
+      document.getElementById('inputNote').value = "";
+      document.getElementById('dupAlert').style.display = 'none';
+      selectYonalish('kirim');
+      document.getElementById('modal').classList.add('active');
+    };
+
+    window.openEditModal = function(id) {
+      if (userRole !== 'admin') return;
+      const record = allRecords.find(r => String(r.id) === String(id));
+      if (!record) return;
+      document.getElementById('modalTitle').innerText = "Tahrirlash";
+      document.getElementById('editId').value = record.id;
+      document.getElementById('inputName').value = record.ism_familiya;
+      document.getElementById('inputOwner').value = record.toy_sohibi;
+      document.getElementById('inputType').value = record.toy_turi;
+      document.getElementById('inputAmount').value = record.miqdori;
+      document.getElementById('inputYear').value = record.yil;
+      document.getElementById('inputNote').value = record.izoh;
+      document.getElementById('dupAlert').style.display = 'none';
+      selectYonalish((record.yonalish || 'kirim').toLowerCase());
+      document.getElementById('modal').classList.add('active');
+    };
+
+    window.closeModal = function() { document.getElementById('modal').classList.remove('active'); };
+
+    window.saveRecord = async function() {
+      if (userRole !== 'admin' || !currentUser) return;
+      const name = document.getElementById('inputName').value.trim();
+      const owner = document.getElementById('inputOwner').value.trim();
+      const amount = document.getElementById('inputAmount').value.trim();
+      const editId = document.getElementById('editId').value;
+
+      if (!name || !owner || !amount) {
+        alert("Ism, To'y sohibi va Miqdorni kiritish shart!");
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.innerText = "Saqlanmoqda...";
+      saveBtn.disabled = true;
+
+      const parsed = parseAmountDetails(amount);
+      const payload = {
+        ism_familiya: name,
+        toy_sohibi: owner,
+        toy_turi: document.getElementById('inputType').value.trim(),
+        miqdori: amount,
+        summa_son: parsed.summa_son,
+        valyuta: parsed.valyuta,
+        mulk_nomi: parsed.mulk_nomi,
+        yil: document.getElementById('inputYear').value.trim(),
+        izoh: document.getElementById('inputNote').value.trim(),
+        yonalish: document.getElementById('inputYonalish').value
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, "users", currentUser.uid, "qadalar", editId), payload);
+        } else {
+          payload.createdAt = Date.now();
+          await addDoc(collection(db, "users", currentUser.uid, "qadalar"), payload);
+        }
+        closeModal();
+      } catch (err) {
+        alert("Bulutga saqlashda xatolik: " + err.message);
+      } finally {
+        saveBtn.innerText = "Saqlash";
+        saveBtn.disabled = false;
+      }
+    };
+
+    window.deleteRecord = async function(id) {
+      if (userRole !== 'admin' || !currentUser) return;
+      if (!confirm("Haqiqatan ham bu yozuvni bulutli bazadan o'chirmoqchimisiz?")) return;
+      try {
+        await deleteDoc(doc(db, "users", currentUser.uid, "qadalar", id));
+      } catch (err) {
+        alert("O'chirishda xatolik: " + err.message);
+      }
+    };
+
+    window.printReport = function() {
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const selectedYear = document.getElementById('yearFilter').value;
+      const selectedType = document.getElementById('typeFilter').value;
+
+      const filtered = allRecords.filter(r => {
+        const yonalish = (r.yonalish || 'kirim').toLowerCase();
+        const matchesType = currentType === 'all' || yonalish === currentType;
+        const matchesOwner = currentOwner === 'all' || r.toy_sohibi === currentOwner;
+        const matchesYear = selectedYear === 'all' || String(r.yil) === String(selectedYear);
+        const matchesWeddingType = selectedType === 'all' || r.toy_turi === selectedType;
+        const text = `${r.ism_familiya} ${r.toy_sohibi} ${r.miqdori} ${r.mulk_nomi || ''} ${r.izoh || ''}`.toLowerCase();
+        return matchesType && matchesOwner && matchesYear && matchesWeddingType && text.includes(search);
+      });
+
+      if (filtered.length === 0) {
+        alert("Ro'yxat bo'sh, saqlash uchun ma'lumot yo'q!");
+        return;
+      }
+
+      const container = document.createElement('div');
+      container.style.padding = '20px';
+      container.style.background = '#ffffff';
+      container.style.color = '#000000';
+      container.style.fontFamily = 'Arial, sans-serif';
+
+      const sarlavha = currentOwner === 'all' ? `${MIJOZ_SOZLAMALARI.oilaSarlavhasi} — Umumiy hisobot` : `"${currentOwner}" to'yi hisoboti`;
+
+      let tableHtml = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="margin: 0; color: #111;">${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}</h2>
+          <p style="margin: 5px 0 0; color: #555; font-size: 13px;">${sarlavha} | Sana: ${new Date().toLocaleDateString('uz-UZ')}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+          <thead>
+            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+              <th style="border: 1px solid #cbd5e1; padding: 8px;">№</th>
+              <th style="border: 1px solid #cbd5e1; padding: 8px;">Yo'nalish</th>
+              <th style="border: 1px solid #cbd5e1; padding: 8px;">Ism Familiya</th>
+              <th style="border: 1px solid #cbd5e1; padding: 8px;">Qada Miqdori</th>
+              <th style="border: 1px solid #cbd5e1; padding: 8px;">To'y Sohibi</th>
+              <th style="border: 1px solid #cbd5e1; padding: 8px;">Yili</th>
+              <th style="border: 1px solid #cbd5e1; padding: 8px;">Izoh</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      filtered.forEach((r, index) => {
+        const isKirim = (r.yonalish || 'kirim').toLowerCase() === 'kirim';
+        const bg = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+        tableHtml += `
+          <tr style="background-color: ${bg}; border-bottom: 1px solid #e2e8f0;">
+            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${index + 1}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 6px; font-weight: bold; color: ${isKirim ? '#059669' : '#dc2626'};">
+              ${isKirim ? 'Kirim' : 'Chiqim'}
+            </td>
+            <td style="border: 1px solid #e2e8f0; padding: 6px; font-weight: bold;">${r.ism_familiya || '-'}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 6px; font-weight: bold;">${r.miqdori || '-'}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 6px;">${r.toy_sohibi || '-'} ${r.toy_turi ? `(${r.toy_turi})` : ''}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${r.yil || '-'}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 6px; color: #64748b;">${r.izoh || '-'}</td>
+          </tr>
+        `;
+      });
+
+      tableHtml += `</tbody></table>`;
+      container.innerHTML = tableHtml;
+
+      html2pdf().set({
+        margin: 10,
+        filename: 'Qada_Daftari_Bulutli_Hisobot.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(container).save();
+    };
+
+    document.getElementById('pinInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') checkPin();
+    });
+  </script>
+</body>
+</html>
