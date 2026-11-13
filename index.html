@@ -1179,7 +1179,9 @@
       document.getElementById('reportOverlay').style.display = 'none';
     };
 
-  window.generateReportImage = async function() {
+  let lastGeneratedBlob = null;
+
+    window.generateReportImage = async function() {
       const btn = document.getElementById('makeImgBtn');
       const area = document.getElementById('reportPrintArea');
       const oldText = btn.innerText;
@@ -1193,11 +1195,15 @@
           useCORS: true
         });
         const imgDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+        canvas.toBlob((blob) => { lastGeneratedBlob = blob; }, "image/jpeg", 0.95);
 
         area.innerHTML = `
           <div style="background:#ecfdf5; border:1px solid #10b981; color:#065f46; padding:10px; border-radius:8px; font-size:12px; margin-bottom:12px; text-align:center;">
             ✅ <b>Hisobot rasmi tayyor!</b><br>
-            Saqlash uchun pastdagi rasm ustiga <b>barmog'ingizni bosib turing</b> va «Rasmni saqlash» (Save image) ni tanlang.
+            Saqlash uchun <b>ekrandan skrinshot oling</b> yoki pastdagi tugma orqali Telegramga yuboring:
+            <div style="margin-top:8px;">
+              <button onclick="shareImageFile()" style="background:#059669; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">📤 Rasmni Telegramga yuborish</button>
+            </div>
           </div>
           <img src="${imgDataUrl}" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" alt="Qada Hisobot">
         `;
@@ -1209,27 +1215,18 @@
       }
     };
 
-    window.shareReportText = async function() {
-      if (!lastFilteredReport.length) return;
-      let text = `👑 ${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}\n`;
-      text += `📅 Sana: ${new Date().toLocaleDateString('uz-UZ')}\n`;
-      text += `━━━━━━━━━━━━━━━\n`;
-      lastFilteredReport.forEach((r, i) => {
-        const belgi = (r.yonalish || 'kirim').toLowerCase() === 'kirim' ? '📥' : '📤';
-        text += `${i + 1}. ${belgi} ${r.ism_familiya} — ${r.miqdori} (${r.toy_sohibi})\n`;
-      });
-
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: 'Qada Daftari Hisoboti', text: text });
-          return;
-        } catch (e) {}
+    window.shareImageFile = async function() {
+      if (lastGeneratedBlob && navigator.canShare) {
+        const file = new File([lastGeneratedBlob], `Qada_Hisobot_${new Date().toISOString().slice(0,10)}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "Qada Daftari Hisoboti" });
+            return;
+          } catch (e) {}
+        }
       }
-
-      try {
-        await navigator.clipboard.writeText(text);
-        alert("Hisobot matni nusxalandi! Endi Telegram yoki WhatsApp'ga kirib Paste (Qo'yish) qilishingiz mumkin.");
-      } catch (e) {
+      alert("Ilova ichida rasmni to'g'ridan-to'g'ri ulashish cheklangan.\n\nIltimos, ekranning o'zidan skrinshot oling yoki «📤 Matn ulashish» tugmasidan foydalaning.");
+    };
         window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(text)}`, '_system');
       }
     };
