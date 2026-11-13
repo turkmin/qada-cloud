@@ -37,7 +37,9 @@
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
-
+    html, body {
+      overscroll-behavior-y: contain;
+    }
     body {
       background: var(--bg-dark);
       background-image: radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.15) 0%, transparent 40%),
@@ -619,15 +621,25 @@
     document.getElementById('mainFamilyTitle').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
     document.getElementById('bannerFamilyHeading').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
 
-    onAuthStateChanged(auth, (user) => {
+   onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUser = user;
         document.getElementById('userEmailLabel').innerText = user.email;
         document.getElementById('emailAuthScreen').style.display = 'none';
-        document.getElementById('pinScreen').style.display = 'flex';
-        document.getElementById('pinInput').focus();
+
+        const savedRole = sessionStorage.getItem('qada_unlocked_role');
+        if (savedRole === 'admin' || savedRole === 'viewer') {
+          userRole = savedRole;
+          applyRoleUI();
+          document.getElementById('pinScreen').style.display = 'none';
+          startRealtimeSync();
+        } else {
+          document.getElementById('pinScreen').style.display = 'flex';
+          document.getElementById('pinInput').focus();
+        }
       } else {
         currentUser = null;
+        sessionStorage.removeItem('qada_unlocked_role');
         if (unsubscribeFirestore) unsubscribeFirestore();
         document.getElementById('emailAuthScreen').style.display = 'flex';
         document.getElementById('pinScreen').style.display = 'none';
@@ -675,6 +687,7 @@
 
     window.logoutAccount = async function() {
       if (confirm("Hisobdan chiqishni xohlaysizmi?")) {
+        sessionStorage.removeItem('qada_unlocked_role');
         await signOut(auth);
       }
     };
@@ -683,11 +696,13 @@
       const entered = document.getElementById('pinInput').value;
       if (entered === MIJOZ_SOZLAMALARI.adminPin) {
         userRole = 'admin';
+        sessionStorage.setItem('qada_unlocked_role', 'admin');
         applyRoleUI();
         document.getElementById('pinScreen').style.display = 'none';
         startRealtimeSync();
       } else if (entered === MIJOZ_SOZLAMALARI.kuzatuvchiPin) {
         userRole = 'viewer';
+        sessionStorage.setItem('qada_unlocked_role', 'viewer');
         applyRoleUI();
         document.getElementById('pinScreen').style.display = 'none';
         startRealtimeSync();
