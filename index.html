@@ -1225,7 +1225,7 @@
           })
         });
 
-        const res = await response.json();
+       const res = await response.json();
         if (res.status === 'ok' && res.url) {
           const link = document.createElement('a');
           link.href = res.url;
@@ -1233,7 +1233,7 @@
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-       else {
+        } else {
           alert("PDF yaratishda xatolik: " + (res.message || "Noma'lum xato"));
         }
       } catch (err) {
