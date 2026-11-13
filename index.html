@@ -1227,8 +1227,13 @@
 
         const res = await response.json();
         if (res.status === 'ok' && res.url) {
-          window.location.href = res.url;
-        } else {
+          const link = document.createElement('a');
+          link.href = res.url;
+          link.download = res.fileName || 'Qada_Hisobot.pdf';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+       else {
           alert("PDF yaratishda xatolik: " + (res.message || "Noma'lum xato"));
         }
       } catch (err) {
