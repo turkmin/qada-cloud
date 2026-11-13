@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Qada Daftari — Oilaviy Bulutli</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -360,10 +359,10 @@
 </head>
 <body>
 
- <!-- HISOBOT OYNASI (APK ICHIDA 100% ISHLAYDI) -->
+  <!-- HISOBOT OYNASI (HAQIQIY PDF YUKLASH BILAN) -->
   <div id="reportOverlay">
     <div class="report-toolbar">
-      <button class="rep-btn rep-btn-pdf" id="makeImgBtn" onclick="generateReportImage()">🖼️ Rasm qilish</button>
+      <button class="rep-btn rep-btn-pdf" id="downloadRealPdfBtn" onclick="downloadRealPdfFromGoogle()">📥 PDF yuklash</button>
       <button class="rep-btn rep-btn-share" onclick="shareReportText()">📤 Matn ulashish</button>
       <button class="rep-btn rep-btn-close" onclick="closeReportOverlay()">✖ Yopish</button>
     </div>
@@ -595,6 +594,8 @@
       kuzatuvchiPin: "1111"
     };
 
+    const APPS_SCRIPT_PDF_URL = "https://script.google.com/macros/s/AKfycbyeBzDfrcHqUHNWsRSF7vFL4DrlNNoDn5AXRA-JCxj0sz6Rz9shu8isReybe1fCOG823A/exec";
+
     const firebaseConfig = {
       apiKey: "AIzaSyC0A7993onZGgt2vSyVOlmKPb8iy8W7aTw",
       authDomain: "qada-daftari.firebaseapp.com",
@@ -616,12 +617,13 @@
     let currentType = 'all';
     let unsubscribeFirestore = null;
     let lastFilteredReport = [];
+    let lastReportSummary = { title: '', subtitle: '', incSum: '', expSum: '' };
 
     document.getElementById('authFamilyTitle').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
     document.getElementById('mainFamilyTitle').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
     document.getElementById('bannerFamilyHeading').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
 
-   onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUser = user;
         document.getElementById('userEmailLabel').innerText = user.email;
@@ -732,6 +734,7 @@
 
     function startRealtimeSync() {
       if (!currentUser) return;
+      if (unsubscribeFirestore) unsubscribeFirestore();
       const q = query(collection(db, "users", currentUser.uid, "qadalar"), orderBy("createdAt", "asc"));
       unsubscribeFirestore = onSnapshot(q, (snapshot) => {
         allRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1104,7 +1107,7 @@
       }
     };
 
-    // HISOBOT OYNASINI OCHISH (ANDROID APK + BRAUZER UCHUN)
+    // HISOBOT OYNASINI OCHISH
     window.printReport = function() {
       const search = document.getElementById('searchInput').value.trim().toLowerCase();
       const selectedYear = document.getElementById('yearFilter').value;
@@ -1136,20 +1139,28 @@
       });
 
       const sarlavha = currentOwner === 'all' ? `${MIJOZ_SOZLAMALARI.oilaSarlavhasi} — Umumiy hisobot` : `"${currentOwner}" to'yi hisoboti`;
+      const subText = `${sarlavha} | Sana: ${new Date().toLocaleDateString('uz-UZ')}`;
+
+      lastReportSummary = {
+        title: MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase(),
+        subtitle: subText,
+        incSum: incSum.toLocaleString('uz-UZ') + " so'm",
+        expSum: expSum.toLocaleString('uz-UZ') + " so'm"
+      };
 
       let htmlContent = `
         <div style="text-align: center; margin-bottom: 14px;">
-          <h3 style="margin: 0; color: #111;">${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}</h3>
-          <p style="margin: 4px 0 0; color: #555; font-size: 12px;">${sarlavha} | Sana: ${new Date().toLocaleDateString('uz-UZ')}</p>
+          <h3 style="margin: 0; color: #111;">${lastReportSummary.title}</h3>
+          <p style="margin: 4px 0 0; color: #555; font-size: 12px;">${subText}</p>
         </div>
         <div class="rep-summary-box">
           <div>
             <div class="rep-sum-lbl">Jami Kirim</div>
-            <div class="rep-sum-val" style="color: #059669;">${incSum.toLocaleString('uz-UZ')} so'm</div>
+            <div class="rep-sum-val" style="color: #059669;">${lastReportSummary.incSum}</div>
           </div>
           <div>
             <div class="rep-sum-lbl">Jami Chiqim</div>
-            <div class="rep-sum-val" style="color: #dc2626;">${expSum.toLocaleString('uz-UZ')} so'm</div>
+            <div class="rep-sum-val" style="color: #dc2626;">${lastReportSummary.expSum}</div>
           </div>
           <div>
             <div class="rep-sum-lbl">Soni</div>
@@ -1194,53 +1205,38 @@
       document.getElementById('reportOverlay').style.display = 'none';
     };
 
-  let lastGeneratedBlob = null;
-
-    window.generateReportImage = async function() {
-      const btn = document.getElementById('makeImgBtn');
-      const area = document.getElementById('reportPrintArea');
+    // GOOGLE APPS SCRIPT ORQALI HAQIQIY .PDF FAYL YUKLASH
+    window.downloadRealPdfFromGoogle = async function() {
+      const btn = document.getElementById('downloadRealPdfBtn');
       const oldText = btn.innerText;
-      btn.innerText = "⏳ Tayyorlanmoqda...";
+      btn.innerText = "⏳ PDF tayyorlanmoqda...";
       btn.disabled = true;
 
       try {
-        const canvas = await html2canvas(area, {
-          scale: 2,
-          backgroundColor: "#ffffff",
-          useCORS: true
+        const response = await fetch(APPS_SCRIPT_PDF_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            title: lastReportSummary.title,
+            subtitle: lastReportSummary.subtitle,
+            incSum: lastReportSummary.incSum,
+            expSum: lastReportSummary.expSum,
+            rows: lastFilteredReport
+          })
         });
-        const imgDataUrl = canvas.toDataURL("image/jpeg", 0.95);
-        canvas.toBlob((blob) => { lastGeneratedBlob = blob; }, "image/jpeg", 0.95);
 
-        area.innerHTML = `
-          <div style="background:#ecfdf5; border:1px solid #10b981; color:#065f46; padding:10px; border-radius:8px; font-size:12px; margin-bottom:12px; text-align:center;">
-            ✅ <b>Hisobot rasmi tayyor!</b><br>
-            Saqlash uchun <b>ekrandan skrinshot oling</b> yoki pastdagi tugma orqali Telegramga yuboring:
-            <div style="margin-top:8px;">
-              <button onclick="shareImageFile()" style="background:#059669; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">📤 Rasmni Telegramga yuborish</button>
-            </div>
-          </div>
-          <img src="${imgDataUrl}" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" alt="Qada Hisobot">
-        `;
+        const res = await response.json();
+        if (res.status === 'ok' && res.url) {
+          window.location.href = res.url;
+        } else {
+          alert("PDF yaratishda xatolik: " + (res.message || "Noma'lum xato"));
+        }
       } catch (err) {
-        alert("Rasm yaratishda xatolik: " + err.message);
+        alert("Serverga ulanishda xatolik: " + err.message);
       } finally {
         btn.innerText = oldText;
         btn.disabled = false;
       }
-    };
-
-    window.shareImageFile = async function() {
-      if (lastGeneratedBlob && navigator.canShare) {
-        const file = new File([lastGeneratedBlob], `Qada_Hisobot_${new Date().toISOString().slice(0,10)}.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: "Qada Daftari Hisoboti" });
-            return;
-          } catch (e) {}
-        }
-      }
-    alert("Ilova ichida rasmni to'g'ridan-to'g'ri ulashish cheklangan.\n\nIltimos, ekranning o'zidan skrinshot oling yoki «📤 Matn ulashish» tugmasidan foydalaning.");
     };
 
     window.shareReportText = async function() {
@@ -1268,7 +1264,7 @@
       }
     };
 
- document.getElementById('pinInput').addEventListener('keypress', function (e) {
+    document.getElementById('pinInput').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') checkPin();
     });
 
@@ -1284,7 +1280,6 @@
       const reportBody = document.getElementById('reportPrintArea');
       const modalContent = document.querySelector('.modal-content');
 
-      // Agar hisobot oynasi yoki modal ochiq bo'lsa, ularning ichki skrollini tekshiramiz
       if (reportBody && reportBody.contains(e.target)) {
         if (reportBody.scrollTop <= 0 && diffY > 0) {
           e.preventDefault();
@@ -1298,7 +1293,6 @@
         return;
       }
 
-      // Asosiy sahifa eng tepada turganda pastga tortilsa bloklaymiz
       if (window.scrollY <= 0 && diffY > 0) {
         e.preventDefault();
       }
