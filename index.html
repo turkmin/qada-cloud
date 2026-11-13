@@ -1233,15 +1233,16 @@
             window.location.href = `intent://${cleanUrl}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
           } else {
             window.open(res.url, '_blank');
-          }
-        } else {
+       } else {
           alert("PDF yaratishda xatolik: " + (res.message || "Noma'lum xato"));
         }
+      } catch (err) {
+        alert("Serverga ulanishda xatolik: " + err.message);
+      } finally {
         btn.innerText = oldText;
         btn.disabled = false;
       }
     };
-
     window.shareReportText = async function() {
       if (!lastFilteredReport.length) return;
       let text = `👑 ${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}\n`;
