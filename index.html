@@ -300,7 +300,7 @@
 </head>
 <body>
 
-  <!-- 1-oyna: Email va Parol orqali kirish (Android APK + iOS uchun 100% mos) -->
+  <!-- 1-oyna: Email va Parol orqali kirish -->
   <div id="emailAuthScreen" class="overlay-screen">
     <div class="auth-box">
       <div style="font-size: 38px; margin-bottom: 10px;">☁️</div>
@@ -339,7 +339,7 @@
       </div>
     </div>
     <div class="top-actions">
-      <button class="icon-btn" onclick="printReport()" title="PDF hisobot">🖨️ PDF</button>
+      <button class="icon-btn" id="pdfBtn" onclick="printReport()" title="PDF hisobot">🖨️ PDF</button>
       <button class="icon-btn" onclick="logoutAccount()" title="Chiqish">🚪</button>
     </div>
   </div>
@@ -525,7 +525,6 @@
       kuzatuvchiPin: "1111"
     };
 
-    // DIQQAT: apiKey qatoriga o'zingiz nusxalagan to'g'ri kalitni qo'ying!
     const firebaseConfig = {
       apiKey: "AIzaSyC0A7993onZGgt2vSyVOlmKPb8iy8W7aTw",
       authDomain: "qada-daftari.firebaseapp.com",
@@ -1021,7 +1020,8 @@
       }
     };
 
-    window.printReport = function() {
+    // ANDROID APK (WEBVIEW) VA BRAUZERLARDA 100% OCHILADIGAN PDF FUNKSIYASI
+    window.printReport = async function() {
       const search = document.getElementById('searchInput').value.trim().toLowerCase();
       const selectedYear = document.getElementById('yearFilter').value;
       const selectedType = document.getElementById('typeFilter').value;
@@ -1040,6 +1040,11 @@
         alert("Ro'yxat bo'sh, saqlash uchun ma'lumot yo'q!");
         return;
       }
+
+      const pdfBtn = document.getElementById('pdfBtn');
+      const oldText = pdfBtn.innerText;
+      pdfBtn.innerText = "⏳...";
+      pdfBtn.disabled = true;
 
       const container = document.createElement('div');
       container.style.padding = '20px';
@@ -1090,13 +1095,39 @@
       tableHtml += `</tbody></table>`;
       container.innerHTML = tableHtml;
 
-      html2pdf().set({
+      const fileName = `Qada_Hisobot_${new Date().toISOString().slice(0,10)}.pdf`;
+      const opt = {
         margin: 10,
-        filename: 'Qada_Daftari_Bulutli_Hisobot.pdf',
+        filename: fileName,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(container).save();
+      };
+
+      try {
+        // Blob o'rniga to'g'ridan-to'g'ri Base64 Data URI yaratamiz (Android APK WebView 0 KB xatosini bartaraf etadi)
+        const pdfDataUri = await html2pdf().set(opt).from(container).outputPdf('datauristring');
+        const link = document.createElement('a');
+        link.href = pdfDataUri;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        // Agar eski Android WebView Data URI yuklashni ham cheklasa, tizimning chop etish/PDF saqlash oynasini ochadi
+        const printWin = window.open('', '_blank');
+        if (printWin) {
+          printWin.document.write(`<html><head><title>${fileName}</title></head><body>${tableHtml}</body></html>`);
+          printWin.document.close();
+          printWin.focus();
+          printWin.print();
+        } else {
+          alert("PDF yaratishda xatolik: " + err.message);
+        }
+      } finally {
+        pdfBtn.innerText = oldText;
+        pdfBtn.disabled = false;
+      }
     };
 
     document.getElementById('pinInput').addEventListener('keypress', function (e) {
