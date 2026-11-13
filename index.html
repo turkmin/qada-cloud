@@ -1179,15 +1179,26 @@
       document.getElementById('reportOverlay').style.display = 'none';
     };
 
-    window.downloadPdfSmart = function() {
-      const isAndroidWebView = /wv|Android.*Version\/[\d.]+/i.test(navigator.userAgent);
-      if (isAndroidWebView) {
-        if (confirm("Android ilova ichida fayl yuklash cheklangan.\n\nHaqiqiy .PDF fayl yuklash uchun sahifani Chrome brauzerida ochaymi?")) {
-          window.open(window.location.href, '_system');
+  window.downloadPdfSmart = function() {
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      // Android telefon/APK ichida bo'lsa, to'g'ridan-to'g'ri Chrome brauzerini ochadi
+      if (isAndroid) {
+        if (confirm("Haqiqiy .PDF fayl yuklash uchun sahifa Chrome brauzerida ochiladi.\n\nChrome ochilgach «📄 Hisobot» -> «📥 PDF yuklash» tugmasini bosing. Davom etamizmi?")) {
+          const urlNoProto = window.location.href.replace(/^https?:\/\//, '');
+          window.location.href = `intent://${urlNoProto}#Intent;scheme=https;package=com.android.chrome;end;`;
         }
         return;
       }
 
+      if (isIOS) {
+        alert("Haqiqiy .PDF fayl yuklash uchun sahifa Safari brauzerida ochiladi.");
+        window.open(window.location.href, '_blank');
+        return;
+      }
+
+      // Kompyuter brauzerlarida to'g'ridan-to'g'ri PDF yuklaydi
       const element = document.getElementById('reportPrintArea');
       const fileName = `Qada_Hisobot_${new Date().toISOString().slice(0,10)}.pdf`;
       html2pdf().set({
