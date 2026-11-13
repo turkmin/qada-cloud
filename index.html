@@ -296,9 +296,77 @@
     .btn-save { background: var(--accent-gradient); color: white; }
     .btn-cancel { background: rgba(255, 255, 255, 0.08); color: var(--text-white); }
     .loader { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
+
+    /* HISOBOT OYNASI (APK + BRAUZER UCHUN) */
+    #reportOverlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      color: #111827;
+      z-index: 10000;
+      flex-direction: column;
+    }
+    .report-toolbar {
+      background: #14102d;
+      color: #ffffff;
+      padding: 12px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .rep-btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .rep-btn-pdf { background: #10b981; color: #fff; }
+    .rep-btn-share { background: #3b82f6; color: #fff; }
+    .rep-btn-close { background: #ef4444; color: #fff; }
+    .report-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: #ffffff;
+    }
+    .rep-summary-box {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .rep-sum-lbl { font-size: 10px; color: #64748b; }
+    .rep-sum-val { font-size: 13px; font-weight: 800; margin-top: 2px; }
   </style>
 </head>
 <body>
+
+  <!-- HISOBOT OYNASI (APK ICHIDA 100% ISHLAYDI) -->
+  <div id="reportOverlay">
+    <div class="report-toolbar">
+      <button class="rep-btn rep-btn-pdf" onclick="downloadPdfSmart()">📥 PDF yuklash</button>
+      <button class="rep-btn rep-btn-share" onclick="shareReportText()">📤 Telegram / Ulashish</button>
+      <button class="rep-btn rep-btn-close" onclick="closeReportOverlay()">✖ Yopish</button>
+    </div>
+    <div class="report-body" id="reportPrintArea"></div>
+  </div>
 
   <!-- 1-oyna: Email va Parol orqali kirish -->
   <div id="emailAuthScreen" class="overlay-screen">
@@ -339,7 +407,7 @@
       </div>
     </div>
     <div class="top-actions">
-      <button class="icon-btn" id="pdfBtn" onclick="printReport()" title="PDF hisobot">🖨️ PDF</button>
+      <button class="icon-btn" id="pdfBtn" onclick="printReport()" title="Hisobot va PDF">📄 Hisobot</button>
       <button class="icon-btn" onclick="logoutAccount()" title="Chiqish">🚪</button>
     </div>
   </div>
@@ -545,6 +613,7 @@
     let currentOwner = 'all';
     let currentType = 'all';
     let unsubscribeFirestore = null;
+    let lastFilteredReport = [];
 
     document.getElementById('authFamilyTitle').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
     document.getElementById('mainFamilyTitle').innerText = MIJOZ_SOZLAMALARI.oilaSarlavhasi;
@@ -1020,8 +1089,8 @@
       }
     };
 
-    // ANDROID APK (WEBVIEW) VA BRAUZERLARDA 100% OCHILADIGAN PDF FUNKSIYASI
-    window.printReport = async function() {
+    // HISOBOT OYNASINI OCHISH (ANDROID APK + BRAUZER UCHUN)
+    window.printReport = function() {
       const search = document.getElementById('searchInput').value.trim().toLowerCase();
       const selectedYear = document.getElementById('yearFilter').value;
       const selectedType = document.getElementById('typeFilter').value;
@@ -1037,38 +1106,49 @@
       });
 
       if (filtered.length === 0) {
-        alert("Ro'yxat bo'sh, saqlash uchun ma'lumot yo'q!");
+        alert("Ro'yxat bo'sh, hisobot uchun ma'lumot yo'q!");
         return;
       }
 
-      const pdfBtn = document.getElementById('pdfBtn');
-      const oldText = pdfBtn.innerText;
-      pdfBtn.innerText = "⏳...";
-      pdfBtn.disabled = true;
+      lastFilteredReport = filtered;
 
-      const container = document.createElement('div');
-      container.style.padding = '20px';
-      container.style.background = '#ffffff';
-      container.style.color = '#000000';
-      container.style.fontFamily = 'Arial, sans-serif';
+      let incSum = 0, expSum = 0;
+      filtered.forEach(r => {
+        if (r.valyuta === 'UZS') {
+          if ((r.yonalish || 'kirim').toLowerCase() === 'chiqim') expSum += Number(r.summa_son || 0);
+          else incSum += Number(r.summa_son || 0);
+        }
+      });
 
       const sarlavha = currentOwner === 'all' ? `${MIJOZ_SOZLAMALARI.oilaSarlavhasi} — Umumiy hisobot` : `"${currentOwner}" to'yi hisoboti`;
 
-      let tableHtml = `
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h2 style="margin: 0; color: #111;">${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}</h2>
-          <p style="margin: 5px 0 0; color: #555; font-size: 13px;">${sarlavha} | Sana: ${new Date().toLocaleDateString('uz-UZ')}</p>
+      let htmlContent = `
+        <div style="text-align: center; margin-bottom: 14px;">
+          <h3 style="margin: 0; color: #111;">${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}</h3>
+          <p style="margin: 4px 0 0; color: #555; font-size: 12px;">${sarlavha} | Sana: ${new Date().toLocaleDateString('uz-UZ')}</p>
         </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+        <div class="rep-summary-box">
+          <div>
+            <div class="rep-sum-lbl">Jami Kirim</div>
+            <div class="rep-sum-val" style="color: #059669;">${incSum.toLocaleString('uz-UZ')} so'm</div>
+          </div>
+          <div>
+            <div class="rep-sum-lbl">Jami Chiqim</div>
+            <div class="rep-sum-val" style="color: #dc2626;">${expSum.toLocaleString('uz-UZ')} so'm</div>
+          </div>
+          <div>
+            <div class="rep-sum-lbl">Soni</div>
+            <div class="rep-sum-val">${filtered.length} ta</div>
+          </div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
           <thead>
-            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
-              <th style="border: 1px solid #cbd5e1; padding: 8px;">№</th>
-              <th style="border: 1px solid #cbd5e1; padding: 8px;">Yo'nalish</th>
-              <th style="border: 1px solid #cbd5e1; padding: 8px;">Ism Familiya</th>
-              <th style="border: 1px solid #cbd5e1; padding: 8px;">Qada Miqdori</th>
-              <th style="border: 1px solid #cbd5e1; padding: 8px;">To'y Sohibi</th>
-              <th style="border: 1px solid #cbd5e1; padding: 8px;">Yili</th>
-              <th style="border: 1px solid #cbd5e1; padding: 8px;">Izoh</th>
+            <tr style="background-color: #f1f5f9;">
+              <th style="border: 1px solid #cbd5e1; padding: 6px;">№</th>
+              <th style="border: 1px solid #cbd5e1; padding: 6px;">Turi</th>
+              <th style="border: 1px solid #cbd5e1; padding: 6px;">Ism Familiya</th>
+              <th style="border: 1px solid #cbd5e1; padding: 6px;">Miqdori</th>
+              <th style="border: 1px solid #cbd5e1; padding: 6px;">To'y Sohibi</th>
             </tr>
           </thead>
           <tbody>
@@ -1077,56 +1157,70 @@
       filtered.forEach((r, index) => {
         const isKirim = (r.yonalish || 'kirim').toLowerCase() === 'kirim';
         const bg = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-        tableHtml += `
-          <tr style="background-color: ${bg}; border-bottom: 1px solid #e2e8f0;">
-            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${index + 1}</td>
-            <td style="border: 1px solid #e2e8f0; padding: 6px; font-weight: bold; color: ${isKirim ? '#059669' : '#dc2626'};">
+        htmlContent += `
+          <tr style="background-color: ${bg};">
+            <td style="border: 1px solid #e2e8f0; padding: 5px; text-align: center;">${index + 1}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 5px; font-weight: bold; color: ${isKirim ? '#059669' : '#dc2626'};">
               ${isKirim ? 'Kirim' : 'Chiqim'}
             </td>
-            <td style="border: 1px solid #e2e8f0; padding: 6px; font-weight: bold;">${r.ism_familiya || '-'}</td>
-            <td style="border: 1px solid #e2e8f0; padding: 6px; font-weight: bold;">${r.miqdori || '-'}</td>
-            <td style="border: 1px solid #e2e8f0; padding: 6px;">${r.toy_sohibi || '-'} ${r.toy_turi ? `(${r.toy_turi})` : ''}</td>
-            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">${r.yil || '-'}</td>
-            <td style="border: 1px solid #e2e8f0; padding: 6px; color: #64748b;">${r.izoh || '-'}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 5px; font-weight: bold;">${r.ism_familiya || '-'}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 5px; font-weight: bold;">${r.miqdori || '-'}</td>
+            <td style="border: 1px solid #e2e8f0; padding: 5px;">${r.toy_sohibi || '-'} ${r.yil ? `(${r.yil})` : ''}</td>
           </tr>
         `;
       });
 
-      tableHtml += `</tbody></table>`;
-      container.innerHTML = tableHtml;
+      htmlContent += `</tbody></table>`;
+      document.getElementById('reportPrintArea').innerHTML = htmlContent;
+      document.getElementById('reportOverlay').style.display = 'flex';
+    };
 
+    window.closeReportOverlay = function() {
+      document.getElementById('reportOverlay').style.display = 'none';
+    };
+
+    window.downloadPdfSmart = function() {
+      const isAndroidWebView = /wv|Android.*Version\/[\d.]+/i.test(navigator.userAgent);
+      if (isAndroidWebView) {
+        if (confirm("Android ilova ichida fayl yuklash cheklangan.\n\nHaqiqiy .PDF fayl yuklash uchun sahifani Chrome brauzerida ochaymi?")) {
+          window.open(window.location.href, '_system');
+        }
+        return;
+      }
+
+      const element = document.getElementById('reportPrintArea');
       const fileName = `Qada_Hisobot_${new Date().toISOString().slice(0,10)}.pdf`;
-      const opt = {
+      html2pdf().set({
         margin: 10,
         filename: fileName,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      }).from(element).save();
+    };
+
+    window.shareReportText = async function() {
+      if (!lastFilteredReport.length) return;
+      let text = `👑 ${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}\n`;
+      text += `📅 Sana: ${new Date().toLocaleDateString('uz-UZ')}\n`;
+      text += `━━━━━━━━━━━━━━━\n`;
+      lastFilteredReport.forEach((r, i) => {
+        const belgi = (r.yonalish || 'kirim').toLowerCase() === 'kirim' ? '📥' : '📤';
+        text += `${i + 1}. ${belgi} ${r.ism_familiya} — ${r.miqdori} (${r.toy_sohibi})\n`;
+      });
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Qada Daftari Hisoboti', text: text });
+          return;
+        } catch (e) {}
+      }
 
       try {
-        // Blob o'rniga to'g'ridan-to'g'ri Base64 Data URI yaratamiz (Android APK WebView 0 KB xatosini bartaraf etadi)
-        const pdfDataUri = await html2pdf().set(opt).from(container).outputPdf('datauristring');
-        const link = document.createElement('a');
-        link.href = pdfDataUri;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (err) {
-        // Agar eski Android WebView Data URI yuklashni ham cheklasa, tizimning chop etish/PDF saqlash oynasini ochadi
-        const printWin = window.open('', '_blank');
-        if (printWin) {
-          printWin.document.write(`<html><head><title>${fileName}</title></head><body>${tableHtml}</body></html>`);
-          printWin.document.close();
-          printWin.focus();
-          printWin.print();
-        } else {
-          alert("PDF yaratishda xatolik: " + err.message);
-        }
-      } finally {
-        pdfBtn.innerText = oldText;
-        pdfBtn.disabled = false;
+        await navigator.clipboard.writeText(text);
+        alert("Hisobot matni nusxalandi! Endi Telegram yoki WhatsApp'ga kirib Paste (Qo'yish) qilishingiz mumkin.");
+      } catch (e) {
+        window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(text)}`, '_system');
       }
     };
 
