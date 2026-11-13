@@ -358,11 +358,11 @@
 </head>
 <body>
 
-  <!-- HISOBOT OYNASI (APK ICHIDA 100% ISHLAYDI) -->
+ <!-- HISOBOT OYNASI (APK ICHIDA 100% ISHLAYDI) -->
   <div id="reportOverlay">
     <div class="report-toolbar">
-      <button class="rep-btn rep-btn-pdf" onclick="downloadPdfSmart()">📥 PDF yuklash</button>
-      <button class="rep-btn rep-btn-share" onclick="shareReportText()">📤 Telegram / Ulashish</button>
+      <button class="rep-btn rep-btn-pdf" id="makeImgBtn" onclick="generateReportImage()">🖼️ Rasm qilish</button>
+      <button class="rep-btn rep-btn-share" onclick="shareReportText()">📤 Matn ulashish</button>
       <button class="rep-btn rep-btn-close" onclick="closeReportOverlay()">✖ Yopish</button>
     </div>
     <div class="report-body" id="reportPrintArea"></div>
@@ -1179,35 +1179,34 @@
       document.getElementById('reportOverlay').style.display = 'none';
     };
 
-  window.downloadPdfSmart = function() {
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  window.generateReportImage = async function() {
+      const btn = document.getElementById('makeImgBtn');
+      const area = document.getElementById('reportPrintArea');
+      const oldText = btn.innerText;
+      btn.innerText = "⏳ Tayyorlanmoqda...";
+      btn.disabled = true;
 
-      // Android telefon/APK ichida bo'lsa, to'g'ridan-to'g'ri Chrome brauzerini ochadi
-      if (isAndroid) {
-        if (confirm("Haqiqiy .PDF fayl yuklash uchun sahifa Chrome brauzerida ochiladi.\n\nChrome ochilgach «📄 Hisobot» -> «📥 PDF yuklash» tugmasini bosing. Davom etamizmi?")) {
-          const urlNoProto = window.location.href.replace(/^https?:\/\//, '');
-          window.location.href = `intent://${urlNoProto}#Intent;scheme=https;package=com.android.chrome;end;`;
-        }
-        return;
+      try {
+        const canvas = await html2canvas(area, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true
+        });
+        const imgDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+
+        area.innerHTML = `
+          <div style="background:#ecfdf5; border:1px solid #10b981; color:#065f46; padding:10px; border-radius:8px; font-size:12px; margin-bottom:12px; text-align:center;">
+            ✅ <b>Hisobot rasmi tayyor!</b><br>
+            Saqlash uchun pastdagi rasm ustiga <b>barmog'ingizni bosib turing</b> va «Rasmni saqlash» (Save image) ni tanlang.
+          </div>
+          <img src="${imgDataUrl}" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" alt="Qada Hisobot">
+        `;
+      } catch (err) {
+        alert("Rasm yaratishda xatolik: " + err.message);
+      } finally {
+        btn.innerText = oldText;
+        btn.disabled = false;
       }
-
-      if (isIOS) {
-        alert("Haqiqiy .PDF fayl yuklash uchun sahifa Safari brauzerida ochiladi.");
-        window.open(window.location.href, '_blank');
-        return;
-      }
-
-      // Kompyuter brauzerlarida to'g'ridan-to'g'ri PDF yuklaydi
-      const element = document.getElementById('reportPrintArea');
-      const fileName = `Qada_Hisobot_${new Date().toISOString().slice(0,10)}.pdf`;
-      html2pdf().set({
-        margin: 10,
-        filename: fileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(element).save();
     };
 
     window.shareReportText = async function() {
