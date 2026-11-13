@@ -1233,6 +1233,7 @@
             window.location.href = `intent://${cleanUrl}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
           } else {
             window.open(res.url, '_blank');
+            }
        } else {
           alert("PDF yaratishda xatolik: " + (res.message || "Noma'lum xato"));
         }
