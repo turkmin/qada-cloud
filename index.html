@@ -1226,21 +1226,12 @@
         });
 
        const res = await response.json();
-        if (res.status === 'ok' && res.base64) {
-          const byteCharacters = atob(res.base64);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const fileName = res.fileName || 'Qada_Hisobot.pdf';
-          const pdfFile = new File([byteArray], fileName, { type: 'application/pdf' });
-
-          if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-            await navigator.share({
-              files: [pdfFile],
-              title: 'Qada Daftari Hisoboti'
-            });
+        if (res.status === 'ok' && res.url) {
+          const cleanUrl = res.url.replace(/^https?:\/\//, '');
+          const encodedUrl = encodeURIComponent(res.url);
+          const isAndroid = /Android/i.test(navigator.userAgent);
+          if (isAndroid) {
+            window.location.href = `intent://${cleanUrl}#Intent;scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;S.browser_fallback_url=${encodedUrl};end`;
           } else {
             window.open(res.url, '_blank');
           }
