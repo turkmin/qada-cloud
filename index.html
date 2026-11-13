@@ -1268,9 +1268,41 @@
       }
     };
 
-    document.getElementById('pinInput').addEventListener('keypress', function (e) {
+ document.getElementById('pinInput').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') checkPin();
     });
+
+    // TEPADAN PASTGA TORTGANDA SAHIFA YANGILANISHINI (PULL-TO-REFRESH) BLOKLASH
+    let touchStartY = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+      const touchY = e.touches[0].clientY;
+      const diffY = touchY - touchStartY;
+      const reportBody = document.getElementById('reportPrintArea');
+      const modalContent = document.querySelector('.modal-content');
+
+      // Agar hisobot oynasi yoki modal ochiq bo'lsa, ularning ichki skrollini tekshiramiz
+      if (reportBody && reportBody.contains(e.target)) {
+        if (reportBody.scrollTop <= 0 && diffY > 0) {
+          e.preventDefault();
+        }
+        return;
+      }
+      if (modalContent && modalContent.contains(e.target)) {
+        if (modalContent.scrollTop <= 0 && diffY > 0) {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // Asosiy sahifa eng tepada turganda pastga tortilsa bloklaymiz
+      if (window.scrollY <= 0 && diffY > 0) {
+        e.preventDefault();
+      }
+    }, { passive: false });
   </script>
 </body>
 </html>
