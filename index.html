@@ -1225,24 +1225,9 @@
           })
         });
 
-      const res = await response.json();
-        if (res.status === 'ok' && res.base64) {
-          const byteCharacters = atob(res.base64);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
-          const blobUrl = URL.createObjectURL(pdfBlob);
-
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = res.fileName || 'Qada_Hisobot.pdf';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        const res = await response.json();
+        if (res.status === 'ok' && res.url) {
+          window.open(res.url, '_system');
         } else {
           alert("PDF yaratishda xatolik: " + (res.message || "Noma'lum xato"));
         }
