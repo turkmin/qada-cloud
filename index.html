@@ -1225,8 +1225,30 @@
           } catch (e) {}
         }
       }
-      alert("Ilova ichida rasmni to'g'ridan-to'g'ri ulashish cheklangan.\n\nIltimos, ekranning o'zidan skrinshot oling yoki «📤 Matn ulashish» tugmasidan foydalaning.");
+    alert("Ilova ichida rasmni to'g'ridan-to'g'ri ulashish cheklangan.\n\nIltimos, ekranning o'zidan skrinshot oling yoki «📤 Matn ulashish» tugmasidan foydalaning.");
     };
+
+    window.shareReportText = async function() {
+      if (!lastFilteredReport.length) return;
+      let text = `👑 ${MIJOZ_SOZLAMALARI.oilaSarlavhasi.toUpperCase()}\n`;
+      text += `📅 Sana: ${new Date().toLocaleDateString('uz-UZ')}\n`;
+      text += `━━━━━━━━━━━━━━━\n`;
+      lastFilteredReport.forEach((r, i) => {
+        const belgi = (r.yonalish || 'kirim').toLowerCase() === 'kirim' ? '📥' : '📤';
+        text += `${i + 1}. ${belgi} ${r.ism_familiya} — ${r.miqdori} (${r.toy_sohibi})\n`;
+      });
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Qada Daftari Hisoboti', text: text });
+          return;
+        } catch (e) {}
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("Hisobot matni nusxalandi! Endi Telegram yoki WhatsApp'ga kirib Paste (Qo'yish) qilishingiz mumkin.");
+      } catch (e) {
         window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(text)}`, '_system');
       }
     };
